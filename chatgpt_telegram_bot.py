@@ -4,6 +4,8 @@ from fastapi import FastAPI, Request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 import openai
+import uvicorn
+import asyncio
 
 # Setup
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -45,11 +47,12 @@ telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_
 async def telegram_webhook(request: Request):
     data = await request.json()
     update = Update.de_json(data, telegram_app.bot)
-await telegram_app.initialize()
-await telegram_app.start()
-await telegram_app.process_update(update)
-await telegram_app.stop()
-return {"ok": True} 
+
+    await telegram_app.initialize()
+    await telegram_app.process_update(update)
+    await telegram_app.shutdown()
+
+    return {"ok": True}
 
 # Set Telegram webhook on startup
 @app.on_event("startup")
@@ -57,9 +60,7 @@ async def on_startup():
     await telegram_app.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
     logging.info("✅ Webhook set!")
 
-# 🟢 Uvicorn entry point for Render deployment
-import uvicorn
-
+# Uvicorn entry point for Render deployment
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("chatgpt_telegram_bot:app", host="0.0.0.0", port=port)
