@@ -3,14 +3,14 @@ import openai
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-# 🔐 Load API keys from environment variables
+# Load API keys from environment variables
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 
-# 🔌 Configure OpenAI client
+# Configure OpenAI client (for openai>=1.0.0)
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-# 🤖 Reply handler
+# Define message handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     try:
@@ -23,7 +23,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply = f"⚠️ Error: {e}"
     await update.message.reply_text(reply)
 
-# 🚀 Start the bot
+# Start the bot
 app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
