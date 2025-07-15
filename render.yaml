@@ -2,13 +2,8 @@ services:
   - type: web
     name: chatgpt-telegram-bot
     env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn chatgpt_telegram_bot:app --host 0.0.0.0 --port 10000
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python chatgpt_telegram_bot.py"
     envVars:
-      - key: TELEGRAM_BOT_TOKEN
-        value: your_bot_token_here
-      - key: OPENAI_API_KEY
-        value: your_openai_key_here
-      - key: WEBHOOK_URL
-        value: https://chatgpt-telegram-bot-g6b6.onrender.com
+      - key: PORT
+        value: 10000
