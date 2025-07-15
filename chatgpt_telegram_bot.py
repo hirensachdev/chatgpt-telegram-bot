@@ -49,8 +49,7 @@ await telegram_app.initialize()
 await telegram_app.start()
 await telegram_app.process_update(update)
 await telegram_app.stop()
-
-    return {"ok": True}
+return {"ok": True} 
 
 # Set Telegram webhook on startup
 @app.on_event("startup")
