@@ -6,7 +6,7 @@ from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     ContextTypes, filters
 )
-import openai
+from openai import OpenAI
 from contextlib import asynccontextmanager
 
 # ✅ ENVIRONMENT VARIABLES
@@ -20,8 +20,8 @@ if not all([TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, WEBHOOK_URL]):
 # ✅ LOGGING
 logging.basicConfig(level=logging.INFO)
 
-# ✅ Set OpenAI API Key
-openai.api_key = OPENAI_API_KEY
+# ✅ OpenAI Client
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ✅ Telegram Bot Setup
 telegram_app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -34,11 +34,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_msg = update.message.text
     try:
-        chat_response = openai.ChatCompletion.create(
+        chat_response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": user_msg}]
         )
-        reply = chat_response['choices'][0]['message']['content'].strip()
+        reply = chat_response.choices[0].message.content.strip()
     except Exception as e:
         logging.exception("OpenAI API error")
         reply = f"⚠️ Error: {str(e)}"
@@ -48,14 +48,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-# ✅ Webhook route
+# ✅ Webhook route for Telegram
 async def telegram_webhook(request: Request):
     data = await request.json()
     update = Update.de_json(data, telegram_app.bot)
     await telegram_app.process_update(update)
     return {"ok": True}
 
-# ✅ FastAPI Lifespan for startup/shutdown
+# ✅ FastAPI Lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await telegram_app.initialize()
@@ -64,16 +64,11 @@ async def lifespan(app: FastAPI):
     yield
     await telegram_app.shutdown()
 
-# ✅ FastAPI App
+# ✅ FastAPI App and Routes
 app = FastAPI(lifespan=lifespan)
 app.post("/webhook")(telegram_webhook)
-if __name__ == "__main__":
-    @app.get("/")
+
+# ✅ Optional: Root route to confirm app is alive
+@app.get("/")
 async def root():
     return {"message": "🚀 Telegram ChatGPT Bot is running!"}
-    try:
-        import uvicorn
-        uvicorn.run(app, host="0.0.0.0", port=10000)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
