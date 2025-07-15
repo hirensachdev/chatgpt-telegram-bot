@@ -1,4 +1,4 @@
-openai==1.95.1
-fastapi==0.110.2
-uvicorn==0.29.0
-python-telegram-bot[webhooks]==20.3
+fastapi
+uvicorn
+python-telegram-bot[webhooks]
+openai>=1.0.0
