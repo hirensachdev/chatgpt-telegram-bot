@@ -6,7 +6,7 @@ from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     ContextTypes, filters
 )
-from openai import OpenAI
+import openai  # ✅ Use openai directly, not OpenAI class
 from contextlib import asynccontextmanager
 
 # ✅ ENVIRONMENT VARIABLES
@@ -20,8 +20,8 @@ if not all([TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, WEBHOOK_URL]):
 # ✅ LOGGING
 logging.basicConfig(level=logging.INFO)
 
-# ✅ OpenAI Client (v1+)
-client = OpenAI(api_key=OPENAI_API_KEY)
+# ✅ Set OpenAI API key
+openai.api_key = OPENAI_API_KEY
 
 # ✅ Telegram Bot Setup
 telegram_app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -34,11 +34,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_msg = update.message.text
     try:
-        chat_response = client.chat.completions.create(
+        chat_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": user_msg}]
         )
-        reply = chat_response.choices[0].message.content.strip()
+        reply = chat_response.choices[0].message["content"].strip()
     except Exception as e:
         logging.exception("OpenAI API error")
         reply = f"⚠️ Error: {str(e)}"
