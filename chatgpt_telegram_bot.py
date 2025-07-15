@@ -67,3 +67,10 @@ async def lifespan(app: FastAPI):
 # ✅ FastAPI App
 app = FastAPI(lifespan=lifespan)
 app.post("/webhook")(telegram_webhook)
+if __name__ == "__main__":
+    try:
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=10000)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
