@@ -7,25 +7,25 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 
-# 🔌 Configure OpenAI
-openai.api_key = OPENAI_API_KEY
+# 🔌 Configure OpenAI client
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 # 🤖 Reply handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": user_message}]
         )
-        reply = response['choices'][0]['message']['content']
+        reply = response.choices[0].message.content.strip()
     except Exception as e:
-        reply = "⚠️ Error: " + str(e)
+        reply = f"⚠️ Error: {e}"
     await update.message.reply_text(reply)
 
 # 🚀 Start the bot
 app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
-print("✅ Bot is running... Open Telegram and talk to it!")
+print("✅ Bot is running...")
 app.run_polling()
