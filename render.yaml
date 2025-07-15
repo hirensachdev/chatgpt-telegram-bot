@@ -7,8 +7,8 @@ services:
     startCommand: uvicorn chatgpt_telegram_bot:app --host 0.0.0.0 --port 10000
     envVars:
       - key: TELEGRAM_BOT_TOKEN
-        sync: false
+        value: your_bot_token_here
       - key: OPENAI_API_KEY
-        sync: false
+        value: your_openai_key_here
       - key: WEBHOOK_URL
-        sync: false
+        value: https://chatgpt-telegram-bot-g6b6.onrender.com
