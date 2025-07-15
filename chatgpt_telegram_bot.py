@@ -53,3 +53,10 @@ async def telegram_webhook(request: Request):
 async def on_startup():
     await telegram_app.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
     logging.info("✅ Webhook set!")
+
+# 🟢 Uvicorn entry point for Render deployment
+import uvicorn
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("chatgpt_telegram_bot:app", host="0.0.0.0", port=port)
