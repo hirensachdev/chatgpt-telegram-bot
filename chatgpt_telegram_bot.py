@@ -68,6 +68,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.post("/webhook")(telegram_webhook)
 if __name__ == "__main__":
+    @app.get("/")
+async def root():
+    return {"message": "🚀 Telegram ChatGPT Bot is running!"}
     try:
         import uvicorn
         uvicorn.run(app, host="0.0.0.0", port=10000)
