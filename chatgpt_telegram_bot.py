@@ -1,57 +1,65 @@
 import os
 import logging
+from fastapi import FastAPI, Request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import (
+    Application, CommandHandler, MessageHandler, filters, ContextTypes
+)
 import openai
 
-# ENV variables
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# Setup
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # e.g. https://your-app.onrender.com
 
-# Logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-
-# Set OpenAI key
 openai.api_key = OPENAI_API_KEY
 
-# Start command
+# Logging
+logging.basicConfig(level=logging.INFO)
+
+# FastAPI app
+app = FastAPI()
+
+# Telegram app
+application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+
+# Handle /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hi! I'm your ChatGPT-powered bot. Ask me anything!")
+    await update.message.reply_text("Hello! I'm your GPT-3.5 chatbot 🤖")
 
-# Message handler
+# Handle messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_msg = update.message.text
+    logging.info(f"User said: {user_msg}")
     try:
-        user_input = update.message.text
-
-        response = openai.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": user_input}],
-            max_tokens=100,
-            temperature=0.7,
+            messages=[
+                {"role": "user", "content": user_msg}
+            ]
         )
-
         reply = response.choices[0].message.content.strip()
-        await update.message.reply_text(reply)
-
     except Exception as e:
-        logging.error(f"OpenAI API error: {e}")
-        await update.message.reply_text("⚠️ Sorry, I had an issue with OpenAI.")
+        reply = f"⚠️ Error: {str(e)}"
 
-# Run bot
-def main():
-    application = Application.builder().token(TELEGRAM_TOKEN).build()
+    await update.message.reply_text(reply)
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+# Telegram handlers
+application.add_handler(CommandHandler("start", start))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
+# Webhook endpoint
+@app.post("/webhook")
+async def telegram_webhook(req: Request):
+    data = await req.json()
+    update = Update.de_json(data, application.bot)
+    await application.process_update(update)
+    return {"ok": True}
+
+# Start the webhook server
+if __name__ == "__main__":
     application.run_webhook(
         listen="0.0.0.0",
         port=10000,
         webhook_url=f"{WEBHOOK_URL}/webhook"
     )
-
-if __name__ == "__main__":
-    main()
