@@ -56,10 +56,8 @@ async def telegram_webhook(req: Request):
     await application.process_update(update)
     return {"ok": True}
 
-# Start the webhook server
-if __name__ == "__main__":
-    application.run_webhook(
-        listen="0.0.0.0",
-        port=10000,
-        webhook_url=f"{WEBHOOK_URL}/webhook"
-    )
+# Initialize the bot on app startup
+@app.on_event("startup")
+async def startup():
+    await application.initialize()
+    logging.info("Bot initialized on startup ✅")
